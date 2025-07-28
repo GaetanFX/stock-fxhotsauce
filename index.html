@@ -664,7 +664,7 @@
                                     <label for="backupFile">Choisir un fichier de sauvegarde :</label>
                                     <input type="file" id="backupFile" accept=".json" style="margin-bottom: 15px;">
                                 </div>
-                                <button class="btn btn-warning" onclick="importData()" style="width: 100%;">
+                                <button class="btn btn-warning" onclick="importData()" style="width: 100%; id="importBtn">
                                     ⚠️ Restaurer les Données
                                 </button>
                                 
@@ -759,9 +759,10 @@
         let lastBackupTime = null;
 
         const permissions = {
-            admin: ['dashboard', 'warehouses', 'products', 'movements', 'history', 'backup', 'users'],
-            manager: ['dashboard', 'products', 'history', 'backup'],
-            employee: ['dashboard', 'movements', 'history']
+    admin: ['dashboard', 'warehouses', 'products', 'movements', 'history', 'backup', 'users'],
+    manager: ['dashboard', 'products', 'history', 'backup'],
+    employee: ['dashboard', 'movements', 'history', 'backup']
+};
         };
 
         document.getElementById('loginForm').addEventListener('submit', function(e) {
@@ -1184,6 +1185,39 @@
             
             alert('💾 Sauvegarde téléchargée avec succès !');
         }
+        
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `alert ${type === 'success' ? 'alert-success' : 'alert-info'}`;
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 1000;
+                min-width: 300px;
+                max-width: 400px;
+                padding: 10px 15px;
+                border-radius: 5px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        function startAutoBackup() {
+            // Sauvegarde automatique toutes les 30 minutes
+            setInterval(() => {
+                if (currentUser) { // Seulement si quelqu'un est connecté
+                    exportDataSilent();
+                    showNotification("💾 Sauvegarde automatique effectuée", "success");
+                }
+            }, 30 * 60 * 1000); // 30 minutes
+        }
 
         function importData() {
             const fileInput = document.getElementById('backupFile');
@@ -1325,8 +1359,18 @@
                 alert('Utilisateur supprimé!');
             }
         }
-        // Initialisation
-        document.getElementById('loginScreen').style.display = 'block';
+      // Initialisation
+document.getElementById('loginScreen').style.display = 'block';
+startAutoBackup(); // Démarrer la sauvegarde automatique 
     </script>
 </body>
 </html>
+// Contrôler l'accès selon le rôle
+            const importBtn = document.getElementById('importBtn');
+            if (importBtn) {
+                if (currentUser.role === 'employee') {
+                    importBtn.style.display = 'none';
+                } else {
+                    importBtn.style.display = 'block';
+                }
+            }
