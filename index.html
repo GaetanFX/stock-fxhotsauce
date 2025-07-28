@@ -700,12 +700,36 @@
                 </div>
             </div>
 
-            <div id="users" class="section">
-                <div class="card">
-                    <h2>👥 Gestion des Utilisateurs</h2>
-                    <p>Fonctionnalité réservée aux administrateurs.</p>
-                </div>
+           <div id="users" class="section">
+    <div class="card">
+        <h2>👥 Ajouter un Utilisateur</h2>
+        <form id="userForm">
+            <div class="form-group">
+                <label>Nom d'utilisateur</label>
+                <input type="text" id="newUsername" required>
             </div>
+            <div class="form-group">
+                <label>Mot de passe</label>
+                <input type="password" id="newPassword" required>
+            </div>
+            <div class="form-group">
+                <label>Rôle</label>
+                <select id="userRole" required>
+                    <option value="">Sélectionner un rôle</option>
+                    <option value="admin">Administrateur</option>
+                    <option value="manager">Responsable</option>
+                    <option value="employee">Employé</option>
+                </select>
+            </div>
+            <button type="submit" class="btn">Ajouter l'Utilisateur</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>👤 Liste des Utilisateurs</h2>
+        <div class="grid" id="usersList"></div>
+    </div>
+</div> 
         </div>
     </div>
 
@@ -805,6 +829,7 @@
             }
             if (sectionId === 'history') updateMovementHistory();
             if (sectionId === 'backup') updateBackupStats();
+            if (sectionId === 'users') updateUsersList();
         }
 
         // Gestion des entrepôts
@@ -1240,6 +1265,66 @@
             updateMovementProductSelect();
         });
 
+        // Gestion des utilisateurs
+        document.getElementById('userForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (currentUser.role !== 'admin') {
+                alert('Seuls les administrateurs peuvent ajouter des utilisateurs');
+                return;
+            }
+            
+            const username = document.getElementById('newUsername').value;
+            const password = document.getElementById('newPassword').value;
+            const role = document.getElementById('userRole').value;
+            
+            if (users.find(u => u.username === username)) {
+                alert('Ce nom d\'utilisateur existe déjà');
+                return;
+            }
+            
+            const newUser = {
+                id: users.length + 1,
+                username: username,
+                password: password,
+                role: role,
+                active: true,
+                createdBy: currentUser.username,
+                createdAt: new Date()
+            };
+            
+            users.push(newUser);
+            this.reset();
+            updateUsersList();
+            alert('Utilisateur ajouté avec succès!');
+        });
+
+        function updateUsersList() {
+            const container = document.getElementById('usersList');
+            container.innerHTML = '';
+            
+            users.forEach(user => {
+                const userCard = document.createElement('div');
+                userCard.className = 'product-card';
+                userCard.innerHTML = `
+                    <h4>${user.username}</h4>
+                    <p><strong>Rôle:</strong> ${user.role}</p>
+                    <p><strong>Statut:</strong> ${user.active ? '✅ Actif' : '❌ Inactif'}</p>
+                    <p><strong>Créé par:</strong> ${user.createdBy || 'Système'}</p>
+                    ${currentUser.role === 'admin' && user.username !== 'admin' ? 
+                        `<button class="btn btn-danger" onclick="deleteUser('${user.username}')">Supprimer</button>` : ''}
+                `;
+                container.appendChild(userCard);
+            });
+        }
+
+        function deleteUser(username) {
+            if (confirm(`Supprimer l'utilisateur ${username} ?`)) {
+                users = users.filter(u => u.username !== username);
+                updateUsersList();
+                alert('Utilisateur supprimé!');
+            }
+        }
         // Initialisation
         document.getElementById('loginScreen').style.display = 'block';
     </script>
